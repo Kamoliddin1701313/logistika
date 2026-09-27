@@ -1,10 +1,17 @@
 "use client";
+
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import { PiTruckTrailerLight } from "react-icons/pi";
 import { IoEye } from "react-icons/io5";
 import { IoMdEyeOff } from "react-icons/io";
-import { useState, FormEvent } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import axios from "axios";
+import { BASE_URL } from "../../../config/constants";
+
 interface User {
   username: string;
   password: string;
@@ -12,11 +19,24 @@ interface User {
 
 function Login() {
   const [openeye, setOpeneye] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isChecking, setIsChecking] = useState<boolean>(true);
+  const router = useRouter();
 
   const [user, setUser] = useState<User>({
     username: "",
     password: "",
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      router.replace("/");
+    } else {
+      setIsChecking(false);
+    }
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -24,11 +44,50 @@ function Login() {
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const response = await axios.post("", user);
-    console.log(response);
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/login`, user);
+      const token = response?.data?.data?.access_token;
+
+      if (response?.data?.success && token) {
+        localStorage.setItem("token", token);
+
+        toast.success("Tizimga muvaffaqiyatli kirdingiz!", {
+          position: "top-right",
+          autoClose: 1500,
+        });
+
+        setTimeout(() => {
+          router.replace("/");
+        }, 1600);
+      } else {
+        toast.error("Tizimga kirishda xatolik yuz berdi!");
+      }
+    } catch (error: any) {
+      console.error("Login xatosi:", error);
+
+      const errorMessage =
+        error.response?.data?.message || "Username yoki parol xato!";
+
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (isChecking) {
+    return null;
+  }
+
   return (
     <div className="w-full h-screen bg-cover bg-center flex bg-[url('/images/logistik.jpg')]">
+      {/* Toast'lar ekranda ko'rinishi uchun konteyner */}
+      <ToastContainer />
+
       <div className="w-full lg:w-[75%] h-full flex flex-col justify-center items-center p-6 bg-gradient-to-l from-white/90 via-white/75 to-transparent">
         <div className="w-full max-w-xl bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg flex flex-col items-center">
           <PiTruckTrailerLight className="text-6xl text-blue-600" />
@@ -36,7 +95,6 @@ function Login() {
             LOGISTICS CRM
           </h1>
 
-          {/* Form qismi */}
           <form
             onSubmit={handleFormSubmit}
             className="w-full flex flex-col gap-4"
@@ -47,10 +105,12 @@ function Login() {
               </label>
               <input
                 name="username"
+                value={user.username}
                 onChange={handleChange}
                 type="text"
                 placeholder="Username"
-                className="w-full px-4 h-[46px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                required
+                className="w-full px-4 h-[46px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
               />
             </div>
 
@@ -61,10 +121,12 @@ function Login() {
               <div className="relative">
                 <input
                   name="password"
+                  value={user.password}
                   onChange={handleChange}
                   type={openeye ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full px-4 h-[46px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  required
+                  className="w-full px-4 h-[46px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
                 />
                 <button
                   type="button"
@@ -92,9 +154,10 @@ function Login() {
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 cursor-pointer text-white font-semibold rounded-lg transition-colors shadow-md mt-2"
+              disabled={loading}
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 cursor-pointer text-white font-semibold rounded-lg transition-colors shadow-md mt-2"
             >
-              Login
+              {loading ? "Kirilmoqda..." : "Login"}
             </button>
           </form>
 
