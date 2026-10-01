@@ -1,5 +1,5 @@
 "use client";
-
+import Cookies from "js-cookie";
 import { useState } from "react";
 import Link from "next/link";
 import { BASE_URL } from "../../../config/constants";
@@ -8,7 +8,7 @@ import {
   IoEye,
   IoLockClosed,
   IoCheckmarkCircle,
-  IoArrowBack, 
+  IoArrowBack,
 } from "react-icons/io5";
 import { IoMdEyeOff } from "react-icons/io";
 import axios from "axios";
@@ -38,7 +38,7 @@ function Change_password() {
   const changeHandle = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const respons = await axios.patch(
         `${BASE_URL}/auth/change-password`,
         change_parol,
@@ -56,7 +56,6 @@ function Change_password() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-4">
       <div className="w-[45%] p-6 max-lg:w-[55%] max-md:w-[70%] max-sm:w-[90%] bg-white rounded-2xl shadow-xl flex flex-col items-center">
-       
         <div className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl mb-2 shadow-md">
           <IoLockClosed />
         </div>

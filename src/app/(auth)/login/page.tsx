@@ -2,6 +2,7 @@
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Cookies from "js-cookie";
 
 import { PiTruckTrailerLight } from "react-icons/pi";
 import { IoEye } from "react-icons/io5";
@@ -20,7 +21,7 @@ interface User {
 function Login() {
   const [openeye, setOpeneye] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isChecking, setIsChecking] = useState<boolean>(true);
+  const [hasToken, setHasToken] = useState<boolean>(false);
   const router = useRouter();
 
   const [user, setUser] = useState<User>({
@@ -29,14 +30,11 @@ function Login() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
+    const token = Cookies.get("token");
     if (token) {
-      router.replace("/");
-    } else {
-      setIsChecking(false);
+      setHasToken(true);
     }
-  }, [router]);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -44,14 +42,15 @@ function Login() {
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    // setLoading(true);
 
     try {
       const response = await axios.post(`${BASE_URL}/auth/login`, user);
       const token = response?.data?.data?.access_token;
 
       if (response?.data?.success && token) {
-        localStorage.setItem("token", token);
+        //localStorage.setItem("token", token);
+        Cookies.set("token", token, { expires: 7, path: "/" });
 
         toast.success("Tizimga muvaffaqiyatli kirdingiz!", {
           position: "top-right",
@@ -61,6 +60,7 @@ function Login() {
         setTimeout(() => {
           router.replace("/");
         }, 1600);
+        
       } else {
         toast.error("Tizimga kirishda xatolik yuz berdi!");
       }
@@ -79,9 +79,6 @@ function Login() {
     }
   };
 
-  if (isChecking) {
-    return null;
-  }
 
   return (
     <div className="w-full h-screen bg-cover bg-center flex bg-[url('/images/logistik.jpg')]">
@@ -161,12 +158,14 @@ function Login() {
             </button>
           </form>
 
-          <Link
-            href="/change_password"
-            className="block text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors mt-1.5 text-right"
-          >
-            Change password?
-          </Link>
+          {hasToken && (
+            <Link
+              href="/change_password"
+              className="block text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors mt-1.5 text-right"
+            >
+              Change password?
+            </Link>
+          )}
 
           <p className="text-xs text-gray-500 mt-6 text-center">
             Log in with the credentials provided by your manager.

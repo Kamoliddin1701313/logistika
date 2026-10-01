@@ -1,4 +1,5 @@
 "use client";
+import Cookies from "js-cookie";
 
 import Sidebar from "@/components/layout/Sidebar";
 import { useRouter } from "next/navigation";
@@ -8,7 +9,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
 
     if (!token) {
       router.push("/login");
@@ -17,10 +18,11 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 bg-slate-900 text-white">
+      <div className="fixed top-0 left-0 w-[250px]">
         <Sidebar />
-      </aside>
-      <main className="flex-1 bg-slate-50 p-6">{children}</main>
+      </div>
+
+      <main className="flex-1 bg-slate-50 ml-[250px]">{children}</main>
     </div>
   );
 }
